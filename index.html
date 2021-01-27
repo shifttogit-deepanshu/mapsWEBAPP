@@ -45,10 +45,41 @@ var platform = new H.service.Platform({
           zoom: 10,
           
         });
-        map.addEventListener('tap', function(evt) {
-    // Log 'tap' and 'mouse' events:
-        markerTap = new H.map.Marker({latitude:evt.currentPointer.viewPortX,longitude:evt.currentPointer.viewPortY}, {icon: icon});
+        markerTap = new H.map.Marker({lat:28.4787573,lng:77.004468});
         map.addObject(markerTap);
+        map.addEventListener('tap', function(evt) {
+            
+            map.removeObject(markerTap)
+            
+            // console.log(evt)
+    // Log 'tap' and 'mouse' events:
+    
+        markerTap = new H.map.Marker(map.screenToGeo(evt.currentPointer.viewportX,evt.currentPointer.viewportY));
+        // console.log(markerTap.getGeometry ())
+        map.addObject(markerTap);
+        
+    var config = {
+    method: 'get',
+    url: 'https://fleet.ls.hereapi.com/2/search/proximity.json?layer_ids=1234&apiKey=s9Soz1Sw1xecIxfjC_XUzgSFbbBMkbQgB5JjGFKO9VY&key_attribute=POSTCOD',
+    params:{
+        proximity:markerTap.getGeometry().lat + "," + markerTap.getGeometry().lng 
+    }
+    };
+
+        axios(config)
+        .then(function (response) {
+            if(response.data.geometries.length >0){
+                console.log(response.data.geometries);
+                console.log("You are inside")
+            }
+            else{
+                console.log("You are outside")
+            }
+        
+        })
+        .catch(function (error) {
+        console.log(error);
+        });
 });
         // Enable the event system on the map instance:
         var mapEvents = new H.mapevents.MapEvents(map);
@@ -101,28 +132,28 @@ database.ref('TestLoc/currLoc').once('value').then(snapshot=>{
         console.error(error)
     })
 
-    var config = {
-    method: 'get',
-    url: 'https://fleet.ls.hereapi.com/2/search/proximity.json?layer_ids=1234&apiKey=s9Soz1Sw1xecIxfjC_XUzgSFbbBMkbQgB5JjGFKO9VY&key_attribute=POSTCOD',
-    params:{
-        proximity:"28.4784453,77.0043667"
-    }
-    };
+    // var config = {
+    // method: 'get',
+    // url: 'https://fleet.ls.hereapi.com/2/search/proximity.json?layer_ids=1234&apiKey=s9Soz1Sw1xecIxfjC_XUzgSFbbBMkbQgB5JjGFKO9VY&key_attribute=POSTCOD',
+    // params:{
+    //     proximity:markerTap.getGeometry().lat + "," + markerTap.getGeometry().lng 
+    // }
+    // };
 
-        axios(config)
-        .then(function (response) {
-            if(response.data.geometries.length >0){
-                console.log(response.data.geometries);
-                console.log("You are inside")
-            }
-            else{
-                console.log("You are outside")
-            }
+    //     axios(config)
+    //     .then(function (response) {
+    //         if(response.data.geometries.length >0){
+    //             console.log(response.data.geometries);
+    //             console.log("You are inside")
+    //         }
+    //         else{
+    //             console.log("You are outside")
+    //         }
         
-        })
-        .catch(function (error) {
-        console.log(error);
-        });
+    //     })
+    //     .catch(function (error) {
+    //     console.log(error);
+    //     });
 
 // Add the marker to the map and center the map at the location of the marker:
 map.addObject(circle);
