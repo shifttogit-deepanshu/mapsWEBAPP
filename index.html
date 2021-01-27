@@ -61,9 +61,9 @@ var database = firebase.database();
 let latitude 
 let longitude 
 var icon = new H.map.Icon(svgMarkup)
-database.ref('TestLoc').once('value').then(snapshot=>{
-    latitude= snapshot.val().latitude
-    longitude=snapshot.val().longitude
+database.ref('TestLoc/currLoc').once('value').then(snapshot=>{
+    latitude= snapshot.val().lat
+    longitude=snapshot.val().long
 
       // Initialize the platform object:
       
@@ -76,9 +76,9 @@ database.ref('TestLoc').once('value').then(snapshot=>{
 map.addObject(marker);
 map.setCenter(coords);
 })  
-database.ref('TestLoc').on('value',snapshot=>{
-    latitude= snapshot.val().latitude
-    longitude=snapshot.val().longitude
+database.ref('TestLoc/currLoc').on('value',snapshot=>{
+    latitude= snapshot.val().lat
+    longitude=snapshot.val().long
 
       // Initialize the platform object:
       map.removeObject(marker)
