@@ -7,6 +7,8 @@
     type="text/javascript" charset="utf-8"></script>
     <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"
        type="text/javascript" charset="utf-8"></script>
+       <script type="text/javascript" src="jszip/dist/jszip.js"></script>
+       <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   </head>
   <body>
     <div style="width: 50%; height: 50%" id="mapContainer">
@@ -29,7 +31,7 @@ measurementId: "G-SRP83SPPP2"
 firebase.initializeApp(firebaseConfig);
 
 var platform = new H.service.Platform({
-        'apikey': 'MI7up3NDWQFYtq1yRIXVKhHtE4Nv9FZ2_JmuTT38RqY'
+        'apikey': 's9Soz1Sw1xecIxfjC_XUzgSFbbBMkbQgB5JjGFKO9VY'
       });
       document.getElementById('mapContainer').innerHTML=""
       // Obtain the default map types from the platform object
@@ -43,6 +45,11 @@ var platform = new H.service.Platform({
           zoom: 10,
           
         });
+        map.addEventListener('tap', function(evt) {
+    // Log 'tap' and 'mouse' events:
+        markerTap = new H.map.Marker({latitude:evt.currentPointer.viewPortX,longitude:evt.currentPointer.viewPortY}, {icon: icon});
+        map.addObject(markerTap);
+});
         // Enable the event system on the map instance:
         var mapEvents = new H.mapevents.MapEvents(map);
 
@@ -64,15 +71,61 @@ var icon = new H.map.Icon(svgMarkup)
 database.ref('TestLoc/currLoc').once('value').then(snapshot=>{
     latitude= snapshot.val().lat
     longitude=snapshot.val().long
-
+    console.log(latitude)
+    console.log(longitude)
       // Initialize the platform object:
       
 // Create an icon, an object holding the latitude and longitude, and a marker:
 
     coords = {lat:latitude , lng: longitude},
     marker = new H.map.Marker(coords, {icon: icon});
+    const circle = new H.map.Circle({lat: latitude, lng: longitude}, 20);
+    const geometry = circle.getGeometry()
+    const wkt = geometry.toString()
+    console.log(wkt)
+    const zip = new JSZip()
+    zip.file("data.wkt","NAME\tWKT\n" + "testhome" + "\t" + wkt)
+    zip.generateAsync({type:"blob"}).then(content =>{
+        var formData = new FormData()
+        formData.append("zipfile",content)
+        axios.post("https://fleet.ls.hereapi.com/2/layers/upload.json",formData,{
+            headers:{
+                "content-type":"multipart/form-data"
+            },
+            params:{
+                'apikey': 's9Soz1Sw1xecIxfjC_XUzgSFbbBMkbQgB5JjGFKO9VY',
+                'layer_id':"1234"
+            }
+        }).then(result=>{console.log(result)},err=>{console.log(err)})
+    }, error=>{
+        console.error(error)
+    })
+
+    var config = {
+    method: 'get',
+    url: 'https://fleet.ls.hereapi.com/2/search/proximity.json?layer_ids=1234&apiKey=s9Soz1Sw1xecIxfjC_XUzgSFbbBMkbQgB5JjGFKO9VY&key_attribute=POSTCOD',
+    params:{
+        proximity:"28.4784453,77.0043667"
+    }
+    };
+
+        axios(config)
+        .then(function (response) {
+            if(response.data.geometries.length >0){
+                console.log(response.data.geometries);
+                console.log("You are inside")
+            }
+            else{
+                console.log("You are outside")
+            }
+        
+        })
+        .catch(function (error) {
+        console.log(error);
+        });
 
 // Add the marker to the map and center the map at the location of the marker:
+map.addObject(circle);
 map.addObject(marker);
 map.setCenter(coords);
 })  
@@ -86,9 +139,12 @@ database.ref('TestLoc/currLoc').on('value',snapshot=>{
 
     coords = {lat:latitude , lng: longitude},
     marker = new H.map.Marker(coords, {icon: icon});
+    const circle = new H.map.Circle({lat: latitude, lng: longitude}, 8000);
+    
 
 // Add the marker to the map and center the map at the location of the marker:
 map.addObject(marker);
+map.addObject(circle);
 map.setCenter(coords);
 })  
 </script>
